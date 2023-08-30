@@ -6,19 +6,57 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class SearchViewController: BaseViewController {
   
     let mainView = SearchView()
     
-    let imageList = ["pencil", "star", "star.fill", "xmark", "person.circle"]
+    var imageUrlList: [String] = []
     
     var delegate: PassImageDelegate?
+    
+    let usAPIService = UnsplashAPIService.shared
+    
+    private var networkWorkItem: DispatchWorkItem?
+    var searchTerm: String = "sky" {
+        didSet {
+            // 이전에 예약된 네트워크 요청을 취소합니다.
+            networkWorkItem?.cancel()
+            
+            // 지연 후 새로운 네트워크 요청을 예약합니다.
+            let workItem = DispatchWorkItem {
+                Task { [weak self] in
+                    guard let self else { return }
+                    await request(term: searchTerm)
+                }
+            }
+            networkWorkItem = workItem
+            DispatchQueue.main.asyncAfter(
+                deadline: DispatchTime.now() + 0.3,
+                execute: workItem
+            )
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         NotificationCenter.default.addObserver(self, selector: #selector(recommendKeywordNotificationObserver), name: .recommendKeyword, object: nil)
         mainView.searchBar.becomeFirstResponder()
+    }
+    
+    func request(term: String) async {
+        let result = await usAPIService.callRequest(searchTerm: term)
+        switch result {
+            
+        case .success(let value):
+            let results = value.results
+            self.imageUrlList = results.map { $0.urls.small }
+            self.mainView.collectionView.reloadData()
+        case .failure(let error):
+            print(error)
+        }
+        
     }
     
     @objc func recommendKeywordNotificationObserver(_ notification: NSNotification) {
@@ -43,22 +81,24 @@ final class SearchViewController: BaseViewController {
 
 extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return imageList.count
+        return imageUrlList.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchCollectionCell.identifier, for: indexPath) as? SearchCollectionCell else { return UICollectionViewCell() }
-        cell.imageView.image = UIImage(systemName: imageList[indexPath.row])
+        if let url = URL(string: imageUrlList[indexPath.row]) {
+            cell.imageView.kf.setImage(with: url)
+        }
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        print(imageList[indexPath.row])
+//        print(imageList[indexPath.row])
         // 신호만 보내줌
 //        NotificationCenter.default.post(<#T##notification: Notification##Notification#>)
 //        NotificationCenter.default.post(name: .selectImage, object: nil, userInfo: ["name": imageList[indexPath.row], "sample": "고래밥"])
         
-        delegate?.receiveImage(imageName: imageList[indexPath.row])
+        delegate?.receiveImage(imageName: imageUrlList[indexPath.row])
         dismiss(animated: true)
     }
     
@@ -70,4 +110,21 @@ extension SearchViewController: UISearchBarDelegate {
         mainView.searchBar.resignFirstResponder()
     }
     
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        imageUrlList.removeAll()
+        mainView.collectionView.reloadData()
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchText.isEmpty {
+            imageUrlList.removeAll()
+            mainView.collectionView.reloadData()
+        } else {
+            searchTerm = searchText
+            print(searchText)
+        }
+    }
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        Task { await request(term: "sky") }
+    }
 }

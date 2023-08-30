@@ -6,7 +6,16 @@
       "location" : "https://github.com/Jimmy-Jung/JimmyKit.git",
       "state" : {
         "branch" : "main",
-        "revision" : "2e21dcf13f4ca8ae5bec87e24b0dc5eb9eec12c6"
+        "revision" : "adb2cc432333091807d28c7b6344cc26bbe1640b"
+      }
+    },
+    {
+      "identity" : "kingfisher",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/onevcat/Kingfisher.git",
+      "state" : {
+        "revision" : "b6f62758f21a8c03cd64f4009c037cfa580a256e",
+        "version" : "7.9.1"
       }
     },
     {
