@@ -12,14 +12,14 @@ final class SearchViewController: BaseViewController {
   
     let mainView = SearchView()
     
-    var imageUrlList: [String] = []
+    var imageUrlList: [Urls] = []
     
     var delegate: PassImageDelegate?
     
     let usAPIService = UnsplashAPIService.shared
     
     private var networkWorkItem: DispatchWorkItem?
-    var searchTerm: String = "sky" {
+    var searchTerm: String = "" {
         didSet {
             // 이전에 예약된 네트워크 요청을 취소합니다.
             networkWorkItem?.cancel()
@@ -51,7 +51,7 @@ final class SearchViewController: BaseViewController {
             
         case .success(let value):
             let results = value.results
-            self.imageUrlList = results.map { $0.urls.small }
+            self.imageUrlList = results.map { $0.urls }
             self.mainView.collectionView.reloadData()
         case .failure(let error):
             print(error)
@@ -86,7 +86,7 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchCollectionCell.identifier, for: indexPath) as? SearchCollectionCell else { return UICollectionViewCell() }
-        if let url = URL(string: imageUrlList[indexPath.row]) {
+        if let url = URL(string: imageUrlList[indexPath.row].small) {
             cell.imageView.kf.setImage(with: url)
         }
         return cell
@@ -96,10 +96,14 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
 //        print(imageList[indexPath.row])
         // 신호만 보내줌
 //        NotificationCenter.default.post(<#T##notification: Notification##Notification#>)
-//        NotificationCenter.default.post(name: .selectImage, object: nil, userInfo: ["name": imageList[indexPath.row], "sample": "고래밥"])
         
-        delegate?.receiveImage(imageName: imageUrlList[indexPath.row])
-        dismiss(animated: true)
+        if let nav = navigationController {
+            NotificationCenter.default.post(name: .selectImage, object: nil, userInfo: ["url": imageUrlList[indexPath.row].regular])
+            nav.popViewController(animated: true)
+        } else {
+            delegate?.receiveImageFromUrl(imageUrlList[indexPath.row].regular)
+            dismiss(animated: true)
+        }
     }
     
     
@@ -111,8 +115,9 @@ extension SearchViewController: UISearchBarDelegate {
     }
     
     func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
-        imageUrlList.removeAll()
-        mainView.collectionView.reloadData()
+//        imageUrlList.removeAll()
+//        mainView.collectionView.reloadData()
+        searchTerm = "sky"
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {

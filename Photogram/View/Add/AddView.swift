@@ -57,6 +57,12 @@ final class AddView: BaseView {
     func changeImage(_ image: UIImage?) {
         photoImageView.image = image
     }
+    
+    func changeImageFromURL(_ urlString: String) {
+        if let url = URL(string: urlString) {
+            photoImageView.kf.setImage(with: url)
+        }
+    }
     let label: UILabel = {
         let label = UILabel()
         label.text("레이블레이블")

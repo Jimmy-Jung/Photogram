@@ -14,6 +14,7 @@ protocol PassDataDelegate {
 
 protocol PassImageDelegate {
     func receiveImage(imageName: String)
+    func receiveImageFromUrl(_ urlString: String)
 }
 
 class AddViewController: BaseViewController {
@@ -48,13 +49,11 @@ class AddViewController: BaseViewController {
     @objc func selectImageNotificationObserver(_ notification: NSNotification) {
         print(#function)
         
-        if let name = notification.userInfo?["name"] as? String {
-            mainView.changeImage(UIImage(systemName: name))
+        if let url = notification.userInfo?["url"] as? String {
+            mainView.changeImageFromURL(url)
         }
     }
     private func searchButtonTapped() {
-        let word = ["Apple", "Banana", "Cookie", "Cake", "Sky"]
-        NotificationCenter.default.post(name: .recommendKeyword, object: nil, userInfo: ["word" : word.randomElement()!])
         transition(viewController: SearchViewController(), style: .pushNavigation)
         // 이렇게 하면 100% 작동될 거라는걸 보장할 수 없음
 //        NotificationCenter.default.post(name: NSNotification.Name("RecommendKeyword"), object: nil, userInfo: ["word" : word.randomElement()!])
@@ -111,8 +110,11 @@ extension AddViewController: PassDataDelegate {
 
 extension AddViewController: PassImageDelegate {
     func receiveImage(imageName: String) {
-        
         mainView.changeImage(UIImage(systemName: imageName))
+    }
+    
+    func receiveImageFromUrl(_ urlString: String) {
+        mainView.changeImageFromURL(urlString)
     }
     
     
