@@ -63,25 +63,12 @@ final class AddView: BaseView {
             photoImageView.kf.setImage(with: url)
         }
     }
-    let label: UILabel = {
-        let label = UILabel()
-        label.text("레이블레이블")
-        label.highlightedTextColor = .blue
-        label.isHighlighted = true
-        label.shadowColor = .lightGray
-        label.shadowOffset = .init(width: 1, height: 1)
-        return label
-    }()
+
     // 무조건 superClass에 있는 configuration메서드를 실행 할 필요는 없음
     override func configureView() {
         [photoImageView, searchButton, dateButton, searchProtocolButton, secondTitleButton, titleButton].forEach {self.addSubview($0)}
-        
-        self.addSubView(label)
     }
     override func setConstraints() {
-        label.snp.makeConstraints { make in
-            make.top.equalToSuperview().inset(100)
-        }
         photoImageView.snp.makeConstraints { make in
             make.topMargin.leadingMargin.trailingMargin.equalTo(self.safeAreaLayoutGuide).inset(10)
             make.height.equalToSuperview().multipliedBy(0.3)
